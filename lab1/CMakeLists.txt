@@ -8,6 +8,6 @@ add_executable(app
         src/grid.cpp
 )
 
-target_compile_features(app PRIVATE cxx_std_17)
+target_compile_features(app PRIVATE cxx_std_20)
 
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
