@@ -1,7 +1,11 @@
 #include "grid.hpp"
+
+#include <algorithm>
 #include <cstdio>
+#include <map>
 #include <stdexcept>
 #include <vector>
+#include <cmath>
 
 Grid::Grid(int width, int height) {
   if (width <= 0 || height <= 0) {
@@ -26,7 +30,7 @@ void Grid::render() const {
   }
   printf("\n");
 
-  for (int y = 0; y < height_; y++) {
+  for (int y = height_-1; y >= 0; y--) {
     printf("%c", framePixel);
 
     for (int x = 0; x < width_; x++) {
@@ -110,3 +114,64 @@ std::vector<Point> Grid::rasterizeLine(Point start, Point end) const {
   return linePixels;
 }
 
+void Grid::drawLine(Point start, Point end) {
+  std::vector<Point> linePixels;
+  linePixels = rasterizeLine(start, end);
+
+  for (int i = 0; i < linePixels.size(); i++) {
+    setPixel(linePixels[i], true);
+  }
+}
+
+void Grid::drawPolygon(Polygon polygon) {
+  int pointCount = polygon.points.size();
+
+  if (pointCount < 3) {
+    throw std::invalid_argument("Polygon requires at least 3 vertices");
+  }
+
+  for (int i = 0; i < pointCount; ++i) {
+    Point& start = polygon.points[i];
+    Point& end = polygon.points[(i + 1) % pointCount];
+    drawLine(start, end);
+  }
+}
+
+void Grid::lineFillPolygon(Polygon polygon) {
+  int pointCount = polygon.points.size();
+
+  if (pointCount < 3) {
+    throw std::invalid_argument("Polygon requires at least 3 vertices");
+  }
+
+  std::map<int, std::vector<double>> intersections;
+  for (int i = 0; i < pointCount; ++i) {
+    Point& start = polygon.points[i];
+    Point& end = polygon.points[(i + 1) % pointCount];
+
+    int startY = std::min(start.y, end.y);
+    int endY = std::max(end.y, start.y);
+    for (int y = startY; y < endY; y++) {
+      if (start.y == end.y) {
+        continue;
+      }
+      double x = start.x + (y - start.y) * (end.x - start.x) / (end.y - start.y);
+      intersections[y].push_back(x);
+    }
+  }
+
+  for (auto inter = intersections.begin(); inter != intersections.end(); ++inter) {
+    int y = inter->first;
+    std::vector<double> value = inter->second;
+    std::sort(value.begin(), value.end());
+
+    for (int i = 0; i < value.size()-1; i += 2) {
+      int startX = std::ceil(value[i]);
+      int endX = std::floor(value[i+1]);
+
+      for (int x = startX; x <= endX; x++) {
+        setPixel(Point(x, y), true);
+      }
+    }
+  }
+}

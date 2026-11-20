@@ -4,12 +4,14 @@
 
 int main() {
   try {
-    Grid grid(20, 20);
+    Grid grid(80, 20);
 
-    Point point = {.x = 5, .y = 5};
+    Polygon polygon;
+    polygon.points = {Point(10, 5), Point(40, 18), Point(75, 10)};
 
+    grid.drawPolygon(polygon);
     grid.render();
-    grid.setPixel(point, true);
+    grid.lineFillPolygon(polygon);
     grid.render();
   } catch (std::exception &error) {
     printf("%s\n", error.what());
